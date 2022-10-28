@@ -1,0 +1,13 @@
+name: nlp_proj
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - flake8
+  - jupyter
+  - matplotlib
+  - numpy
+  - pytest
+  - python>=3.6
+  - pytorch
+  - black
