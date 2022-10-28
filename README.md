@@ -7,7 +7,7 @@ Wiki-Manual: [https://github.com/chaojiang06/wiki-auto/tree/master/wiki-manual](
 
 ## References
 
-Chao Jiang, Mounica Maddela, Wuwei Lan, Yang
+[1] Chao Jiang, Mounica Maddela, Wuwei Lan, Yang
 Zhong, and Wei Xu. 2020. Neural CRF model for
 sentence alignment in text simplification. In Proceed-
 ings of the 58th Annual Meeting of the Association
