@@ -6,7 +6,9 @@ Usage:
 
 python src/nlp_proj/stanza_annotate.py \
     --data_filepath ../wiki-auto/wiki-manual/test.tsv \
-    --out_filepath ./data/stanza_annotate/test_annotations.jsonl
+    --out_filepath ./data/stanza_annotate/test_annotations.jsonl \
+    --test_run  True \
+    --port 3002
 
 python src/nlp_proj/stanza_annotate.py \
     --data_filepath ../wiki-auto/wiki-manual/train.tsv \
@@ -35,7 +37,7 @@ from nlp_proj.data_loader import (
 )
 
 logging.getLogger().setLevel(logging.INFO)
-SVO_TYPE = Union[None, Tuple[str, int]]
+SVO_TYPE = List[Tuple[str, int]]
 
 
 def get_tokens(sentence_dict: Dict) -> Tuple[List[str], List[int]]:
@@ -67,9 +69,9 @@ def get_subj_verb_obj(sentence_dict: Dict) -> Tuple[SVO_TYPE, SVO_TYPE, SVO_TYPE
             where each is either None or a tuple of the string and its index position in the sentence
     """
 
-    subj = None
-    verb = None
-    obj = None
+    subj = set()
+    verb = set()
+    obj = set()
 
     dep_keys = [
         "basicDependencies",
@@ -77,21 +79,27 @@ def get_subj_verb_obj(sentence_dict: Dict) -> Tuple[SVO_TYPE, SVO_TYPE, SVO_TYPE
         "enhancedPlusPlusDependencies",
     ]
     idx = 0
-    while idx < len(dep_keys) and any([subj is None, verb is None, obj is None]):
+    while idx < len(dep_keys):
         dependency_key = dep_keys[idx]
         if dependency_key in sentence_dict.keys():
             deps = sentence_dict[dependency_key]
 
             for dep in deps:
-                if dep["dep"] == "nsubj":
-                    if verb is None:
-                        verb_str = dep["governorGloss"]
-                        verb_idx = dep["governor"]
-                        verb = (verb_str, verb_idx)
-                    if subj is None:
-                        subj_str = dep["dependentGloss"]
-                        subj_idx = dep["dependent"]
-                        subj = (subj_str, subj_idx)
+                if dep["dep"] in ["nsubj", "nsubj:pass"]:
+                    verb_str = dep["governorGloss"]
+                    verb_idx = dep["governor"]
+                    verb.add((verb_str, verb_idx))
+                    subj_str = dep["dependentGloss"]
+                    subj_idx = dep["dependent"]
+                    subj.add((subj_str, subj_idx))
+
+                if dep["dep"] in ["aux:pass"]:
+                    verb_str = dep["governorGloss"]
+                    verb_idx = dep["governor"]
+                    verb.add((verb_str, verb_idx))
+                    verb_str = dep["dependentGloss"]
+                    verb_idx = dep["dependent"]
+                    verb.add((verb_str, verb_idx))
 
                 elif dep["dep"] == "obj":
                     if obj is None:
@@ -101,7 +109,50 @@ def get_subj_verb_obj(sentence_dict: Dict) -> Tuple[SVO_TYPE, SVO_TYPE, SVO_TYPE
 
         idx += 1
 
-    return subj, verb, obj
+    return sorted(subj), sorted(verb), sorted(obj)
+
+
+def determine_passive(sentence_dict: Dict) -> Tuple[bool, SVO_TYPE]:
+    """Determine if sentence has passive voice and return list of passive voice verbs
+    used if applicable
+
+    Args:
+        sentence_dict (Dict): dictionary from document["sentences"] after client.annotate
+
+    Returns:
+        Tuple[bool, SVO_TYPE]: _description_
+    """
+
+    passive_verb = set()
+
+    dep_keys = [
+        "basicDependencies",
+        "enhancedDependencies",
+        "enhancedPlusPlusDependencies",
+    ]
+    idx = 0
+    while idx < len(dep_keys):
+        dependency_key = dep_keys[idx]
+        if dependency_key in sentence_dict.keys():
+            deps = sentence_dict[dependency_key]
+
+            for dep in deps:
+                if dep["dep"] in ["nsubj:pass"]:
+                    verb_str = dep["governorGloss"]
+                    verb_idx = dep["governor"]
+                    passive_verb.add((verb_str, verb_idx))
+
+                if dep["dep"] in ["aux:pass"]:
+                    verb_str = dep["governorGloss"]
+                    verb_idx = dep["governor"]
+                    passive_verb.add((verb_str, verb_idx))
+                    verb_str = dep["dependentGloss"]
+                    verb_idx = dep["dependent"]
+                    passive_verb.add((verb_str, verb_idx))
+
+        idx += 1
+
+    return len(passive_verb) != 0, sorted(passive_verb)
 
 
 # def parse_syntax_tree_str(tree: str):
@@ -219,7 +270,7 @@ if __name__ == "__main__":
     df, columns = load_wiki_manual_tsv(data_filepath)
     df_sent = concat_wiki_manual_sentences(df, drop_duplicates=True)
     if test_run is True:
-        df_sent = df_sent.sample(n=10)
+        df_sent = df_sent.sample(n=6000)
         logging.info("TEST RUN, sampling data to 10 rows")
     dataset = Dataset.from_pandas(df_sent)
     logging.info("Loaded data:")
