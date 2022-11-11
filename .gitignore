@@ -1,5 +1,6 @@
 # Custom ignores
 data/*
+corenlp_server-*
 
 
 # Byte-compiled / optimized / DLL files
