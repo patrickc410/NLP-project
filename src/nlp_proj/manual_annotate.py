@@ -12,6 +12,14 @@ python src/nlp_proj/manual_annotate.py \
     --start_idx 100 \
     --end_idx 115
 
+python src/nlp_proj/manual_annotate.py \
+    --data_filepath ./data/stanza_annotate/dev_annotations.jsonl \
+    --out_dir ./data/manual_annotate/patrick_0_100 \
+    --which_annotate active \
+    --annotator patrick \
+    --start_idx 0 \
+    --end_idx 100
+
 """
 import argparse
 import pathlib
@@ -46,11 +54,18 @@ def write_annotation_row(out_filepath: str, annotation_row: Dict) -> None:
 
 
 def handle_svo_annotation(
-    tokens: List[str], token_idxs: List[int], svo: SVO_TYPE, which: str
+    sent: str,
+    sent_index: str,
+    tokens: List[str],
+    token_idxs: List[int],
+    svo: SVO_TYPE,
+    which: str,
 ) -> Dict:
     """Handle prompting user for annotation on subj, verb, obj multi-label annotation
 
     Args:
+        sent (str): the sentence
+        sent_index (str): sentence index in dataset
         tokens (List[str]): list of words in sentence
         token_idxs (List[int]): list of word indexes in sentence
         svo (SVO_TYPE): output of get_subj_verb_obj(sentence_dict)
@@ -65,15 +80,15 @@ def handle_svo_annotation(
         svo = svo[0]
         which_long = "subject"
     elif which == "verb":
-        verb = svo[1]
+        svo = svo[1]
         which_long = "verb"
     elif which == "obj":
-        obj = svo[2]
+        svo = svo[2]
         which_long = "object"
     else:
         raise Exception(f"Invalid argument which={which}")
 
-    print(f"SENTENCE: {sent}")
+    print(f"\nSENTENCE: {sent}")
 
     svo_ind_list = [False for _ in range(len(tokens))]
     if svo is not None:
@@ -83,14 +98,48 @@ def handle_svo_annotation(
         Choice((token, idx), name=token, enabled=svo_ind)
         for token, idx, svo_ind in zip(tokens, token_idxs, svo_ind_list)
     ]
+    svo_choices.insert(
+        0, Choice(("<DON'T KNOW>", -1), name="<DON'T KNOW>", enabled=False)
+    )
 
     svo_selection = inquirer.checkbox(
-        message=f"Select {which_long} tokens(s):",
+        message=f"Select all {which_long} tokens(s):",
         choices=svo_choices,
         cycle=True,
     ).execute()
 
     annotation_row = {"sent-index": sent_index, f"{which}_manual": svo_selection}
+    return annotation_row
+
+
+def handle_active_voice_annotation(sent: str, sent_index: str) -> Dict:
+    """Handle prompting user for annotation of active vs. passive voice
+
+    Args:
+        sent (str): the sentence
+        sent_index (str): sentence index in dataset
+
+    Returns:
+        Dict: _description_
+    """
+    print(f"\nSENTENCE: {sent}")
+
+    active_voice_choices = [
+        Choice(-1, name="<DON'T KNOW>", enabled=False),
+        Choice(1, name="active voice", enabled=False),
+        Choice(0, name="passive voice", enabled=False),
+    ]
+
+    active_voice_selection = inquirer.select(
+        message=f"Select whether the sentence uses active or passive voice: ",
+        choices=active_voice_choices,
+        cycle=True,
+    ).execute()
+
+    annotation_row = {
+        "sent-index": sent_index,
+        "active_voice_manual": active_voice_selection,
+    }
     return annotation_row
 
 
@@ -122,7 +171,7 @@ if __name__ == "__main__":
     logging.info(f"Annotator name: {annotator}")
 
     # Check which_annotate arg
-    supported_annotations = ["subj", "verb", "obj"]
+    supported_annotations = ["subj", "verb", "obj", "active"]
     if which_annotate not in supported_annotations:
         raise Exception(f"Support for annotating {which_annotate} not implemented yet")
     logging.info(f"Which annotation: {which_annotate}")
@@ -191,8 +240,8 @@ if __name__ == "__main__":
 
     for idx, row in df_subset.iterrows():
 
-        sent_index = row["sent-index"]
         sent = row["sent"]
+        sent_index = row["sent-index"]
         sentence_dict = row["sentence_dict"]
 
         tokens, token_idxs = get_tokens(sentence_dict)
@@ -201,11 +250,19 @@ if __name__ == "__main__":
         svo = get_subj_verb_obj(sentence_dict)
 
         if which_annotate == "subj":
-            anno_row = handle_svo_annotation(tokens, token_idxs, svo, which="subj")
+            anno_row = handle_svo_annotation(
+                sent, sent_index, tokens, token_idxs, svo, which="subj"
+            )
         elif which_annotate == "verb":
-            anno_row = handle_svo_annotation(tokens, token_idxs, svo, which="verb")
+            anno_row = handle_svo_annotation(
+                sent, sent_index, tokens, token_idxs, svo, which="verb"
+            )
         elif which_annotate == "obj":
-            anno_row = handle_svo_annotation(tokens, token_idxs, svo, which="obj")
+            anno_row = handle_svo_annotation(
+                sent, sent_index, tokens, token_idxs, svo, which="obj"
+            )
+        elif which_annotate == "active":
+            anno_row = handle_active_voice_annotation(sent, sent_index)
 
         anno_row["annotator"] = annotator
 
