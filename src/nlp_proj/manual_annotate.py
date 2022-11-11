@@ -27,12 +27,18 @@ import sys
 import os
 import logging
 from typing import List, Dict
+from pprint import pprint
 
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 import pandas as pd
 
-from nlp_proj.stanza_annotate import get_tokens, get_subj_verb_obj, SVO_TYPE
+from nlp_proj.stanza_annotate import (
+    get_tokens,
+    get_subj_verb_obj,
+    determine_passive,
+    SVO_TYPE,
+)
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -88,11 +94,10 @@ def handle_svo_annotation(
     else:
         raise Exception(f"Invalid argument which={which}")
 
-    print(f"\nSENTENCE: {sent}")
-
     svo_ind_list = [False for _ in range(len(tokens))]
-    if svo is not None:
-        svo_ind_list = [(token_idxs[i] == svo[1]) for i in range(len(tokens))]
+    if svo is not None and len(svo) > 0:
+        svo_idxs = set([i[1] for i in svo])
+        svo_ind_list = [(token_idxs[i] in svo_idxs) for i in range(len(tokens))]
 
     svo_choices = [
         Choice((token, idx), name=token, enabled=svo_ind)
@@ -122,7 +127,6 @@ def handle_active_voice_annotation(sent: str, sent_index: str) -> Dict:
     Returns:
         Dict: _description_
     """
-    print(f"\nSENTENCE: {sent}")
 
     active_voice_choices = [
         Choice(-1, name="<DON'T KNOW>", enabled=False),
@@ -139,6 +143,67 @@ def handle_active_voice_annotation(sent: str, sent_index: str) -> Dict:
     annotation_row = {
         "sent-index": sent_index,
         "active_voice_manual": active_voice_selection,
+    }
+    return annotation_row
+
+
+
+def handle_simplest_verb_annotation(sent: str, sent_index: str) -> Dict:
+    """Handle prompting user for annotation of whether sentence uses simplest form of its verb
+
+    Args:
+        sent (str): the sentence
+        sent_index (str): sentence index in dataset
+
+    Returns:
+        Dict: _description_
+    """
+
+    simple_verb_choices = [
+        Choice(-1, name="<DON'T KNOW>", enabled=False),
+        Choice(1, name="simple verb", enabled=False),
+        Choice(0, name="not simplest form of verb", enabled=False),
+    ]
+
+    simple_verb_selection = inquirer.select(
+        message=f"Select whether the sentence uses the simplest form of its verb: ",
+        choices=simple_verb_choices,
+        cycle=True,
+    ).execute()
+
+    annotation_row = {
+        "sent-index": sent_index,
+        "simple_verb_manual": simple_verb_selection,
+    }
+    return annotation_row
+
+
+def handle_no_hidden_verb_annotation(sent: str, sent_index: str) -> Dict:
+    """Handle prompting user for annotation of whether sentence uses no hidden verbs
+
+    Args:
+        sent (str): the sentence
+        sent_index (str): sentence index in dataset
+
+    Returns:
+        Dict: _description_
+    """
+
+    hidden_verb_choices = [
+        Choice(-1, name="<DON'T KNOW>", enabled=False),
+        Choice(1, name="no hidden verbs", enabled=False),
+        Choice(0, name="hidden verb(s)", enabled=False),
+    ]
+
+    hidden_verb_selection = inquirer.select(
+        message=f"Select whether the sentence uses hidden verbs: ",
+        choices=hidden_verb_choices,
+        cycle=True,
+    ).execute()
+
+    annotation_row = {
+        "sent-index": sent_index,
+        "no_hidden_verb_manual": hidden_verb_selection,
     }
     return annotation_row
 
@@ -171,7 +236,7 @@ if __name__ == "__main__":
     logging.info(f"Annotator name: {annotator}")
 
     # Check which_annotate arg
-    supported_annotations = ["subj", "verb", "obj", "active"]
+    supported_annotations = ["subj", "verb", "obj", "active", "simple_verb", "no_hidden_verb"]
     if which_annotate not in supported_annotations:
         raise Exception(f"Support for annotating {which_annotate} not implemented yet")
     logging.info(f"Which annotation: {which_annotate}")
@@ -243,11 +308,17 @@ if __name__ == "__main__":
         sent = row["sent"]
         sent_index = row["sent-index"]
         sentence_dict = row["sentence_dict"]
+        print(f"\nINDEX={idx}, sent-index={sent_index}")
+        # breakpoint()
 
         tokens, token_idxs = get_tokens(sentence_dict)
         if len(tokens) == 0:
             logging.info(f"Issue getting tokens for row idx={idx}")
         svo = get_subj_verb_obj(sentence_dict)
+
+        if "parse" in sentence_dict.keys() and sentence_dict["parse"]:
+            pprint(sentence_dict["parse"])
+        print(f"SENTENCE: {sent}")
 
         if which_annotate == "subj":
             anno_row = handle_svo_annotation(
@@ -262,7 +333,16 @@ if __name__ == "__main__":
                 sent, sent_index, tokens, token_idxs, svo, which="obj"
             )
         elif which_annotate == "active":
+            passive, passive_verbs = determine_passive(sentence_dict)
+            print(
+                f"Stanford NLP annotation suggests {'active' if not passive else 'passive'} voice; passive verbs: {passive_verbs}"
+            )
             anno_row = handle_active_voice_annotation(sent, sent_index)
+        elif which_annotate == "simple_verb":
+            anno_row = handle_simplest_verb_annotation(sent, sent_index)
+        elif which_annotate == "no_hidden_verb":
+            anno_row = handle_no_hidden_verb_annotation(sent, sent_index)
+
 
         anno_row["annotator"] = annotator
 
