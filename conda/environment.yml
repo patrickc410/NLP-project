@@ -11,3 +11,7 @@ dependencies:
   - python>=3.6
   - pytorch
   - black
+  - pandas
+  - pip:
+    - stanza
+    - datasets
