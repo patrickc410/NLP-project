@@ -12,6 +12,11 @@ dependencies:
   - pytorch
   - black
   - pandas
+  - pip
   - pip:
     - stanza
     - datasets
+    - transformers
+    - wandb
+    - torchmetrics
+    - tqdm
