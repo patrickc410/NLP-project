@@ -1,4 +1,4 @@
-# import wandb
+import wandb
 import argparse
 import torch
 from torch import Tensor
@@ -73,7 +73,7 @@ def train_model(
     model = model.to(device)
 
     # Tell wandb to watch what the model gets up to: gradients, weights, and more!
-    # wandb.watch(model, criterion, log="all", log_freq=10)
+    wandb.watch(model, criterion, log="all", log_freq=10)
 
     # Run training and track with wandb
     example_ct = 0  # number of examples seen
@@ -104,33 +104,25 @@ def train_model(
             batch_ct += 1
 
             # Report metrics every batch
-            if ((batch_ct + 1) % 25) == 0:
-                # TEMP
-                # wandb.log({"epoch": epoch, "loss": loss}, step=example_ct)
-                # TEMP
+            if ((batch_ct + 1) % 5) == 0:
                 # fmt: off
+                wandb.log({"epoch": epoch, "loss": loss}, step=example_ct)
                 logging.info(f"Epoch {epoch}, Training Loss after {str(example_ct).zfill(5)} examples: {loss:.3f}")
                 # fmt: on
 
         # fmt: off
         train_acc = torch.mean(torch.tensor(train_accs))
         train_f1 = torch.mean(torch.tensor(train_f1s))
-        # TEMP
-        # wandb.log({"epoch": epoch, "train_acc": train_acc}, step=example_ct)
-        # wandb.log({"epoch": epoch, "train_f1": train_f1}, step=example_ct)
-        # TEMP
-        logging.info(f"Epoch {epoch}, Training Acc after {str(example_ct).zfill(5)} examples: {train_acc:.3f}")
-        logging.info(f"Epoch {epoch}, Training F1 after {str(example_ct).zfill(5)} examples: {train_f1:.3f}")
+        wandb.log({"epoch": epoch, "train_acc": train_acc, "train_f1": train_f1}, step=example_ct)
+        logging.info(f"Epoch {epoch}, Training Acc   after {str(example_ct).zfill(5)} examples: {train_acc:.3f}")
+        logging.info(f"Epoch {epoch}, Training F1    after {str(example_ct).zfill(5)} examples: {train_f1:.3f}")
         # fmt: on
 
         # fmt: off
-        val_acc, val_f1 = test_model(model, val_loader, config.num_classes, config.device)
-        # TEMP
-        # wandb.log({"epoch": epoch, "val_acc": val_acc}, step=example_ct)
-        # wandb.log({"epoch": epoch, "val_f1": val_f1}, step=example_ct)
-        # TEMP
+        val_acc, val_f1, _ = test_model(model, val_loader, config.num_classes, config.device)
+        wandb.log({"epoch": epoch, "val_acc": val_acc, "val_f1": val_f1}, step=example_ct)
         logging.info(f"Epoch {epoch}, Validation Acc after {str(example_ct).zfill(5)} examples: {val_acc:.3f}")
-        logging.info(f"Epoch {epoch}, Validation F1 after {str(example_ct).zfill(5)} examples: {val_f1:.3f}")
+        logging.info(f"Epoch {epoch}, Validation F1  after {str(example_ct).zfill(5)} examples: {val_f1:.3f}")
         # fmt: on
 
     return model
@@ -175,7 +167,7 @@ def train_batch(
 
 def test_model(
     model: nn.Module, test_loader: DataLoader, num_classes: int, device: torch.device
-) -> Tuple[float, float]:
+) -> Tuple[float, float, int]:
     """Test model performance over data in test_loader
 
     Args:
@@ -185,7 +177,8 @@ def test_model(
         device (torch.device): _description_
 
     Returns:
-        Tuple[float, float]: _description_
+        Tuple[float, float, int]:
+            test accuracy, test f1 score, and number of samples tested on
     """
     # Device
     model = model.to(device)
@@ -217,14 +210,7 @@ def test_model(
     # Evaluation
     test_acc = accuracy_torch(all_preds, all_labels, num_classes)
     test_f1 = f1_torch(all_preds, all_labels, num_classes)
-
-    logging.info(
-        f"Accuracy of the model on the {str(total).zfill(5)} test samples: {test_acc:.3f}"
-    )
-    logging.info(
-        f"F1       of the model on the {str(total).zfill(5)} test samples: {test_f1:.3f}"
-    )
-    return test_acc, test_f1
+    return test_acc, test_f1, total
 
 
 def save_model(model: nn.Module, loader: DataLoader) -> None:
@@ -235,10 +221,7 @@ def save_model(model: nn.Module, loader: DataLoader) -> None:
 
     # Save the model in the exchangeable ONNX format
     torch.onnx.export(model, (input_ids, attention_mask), "model.onnx")
-
-    # TEMP
-    # wandb.save("model.onnx")
-    # TEMP
+    wandb.save("model.onnx")
 
 
 def make(
@@ -280,7 +263,7 @@ def make(
     # Make the model
     model = ActiveVoiceModel()
     logging.info("Loaded model")
-    # model = model.to(config.device)
+    model = model.to(config.device)
 
     # Make the loss and optimizer
     criterion = model.loss_criterion
@@ -299,39 +282,36 @@ def model_pipeline(config: Dict) -> nn.Module:
     Returns:
         nn.Module: trained model
     """
+    project_name = config["project_name"]
 
-    # TEMP
-    # # tell wandb to get started
-    # with wandb.init(project="pytorch-demo", config=config):
-    #     # access all HPs through wandb.config, so logging matches execution!
-    #     config = wandb.config
-    # TEMP
+    # tell wandb to get started
+    with wandb.init(project=project_name, config=config):
+        # access all HPs through wandb.config, so logging matches execution!
+        config = wandb.config
 
-    # TEMP
-    config = config
-    # TEMP
+        # make the model, data, and optimization problem
+        # fmt: off
+        model, train_loader, val_loader, test_loader, criterion, optimizer = make(config)
+        logging.info("Finished make() function")
+        logging.info(model)
+        # fmt: on
 
-    # make the model, data, and optimization problem
-    # fmt: off
-    model, train_loader, val_loader, test_loader, criterion, optimizer = make(config)
-    logging.info("Finished make() function")
-    logging.info(model)
-    # fmt: on
+        # and use them to train the model
+        model = train_model(
+            model, train_loader, val_loader, criterion, optimizer, config
+        )
+        logging.info("Finished train() function")
 
-    # and use them to train the model
-    model = train_model(model, train_loader, val_loader, criterion, optimizer, config)
-    logging.info("Finished train() function")
+        # fmt: off
+        # and test its final performance
+        test_acc, test_f1, sample_count = test_model(model, test_loader, config.num_classes, config.device)
+        logging.info(f"Test Accuracy on the {str(sample_count).zfill(5)} test samples: {test_acc:.3f}")
+        logging.info(f"Test F1       on the {str(sample_count).zfill(5)} test samples: {test_f1:.3f}")
+        wandb.log({"test_acc": test_acc, "test_f1": test_f1})
+        # fmt: on
 
-    # and test its final performance
-    test_acc, test_f1 = test_model(
-        model, test_loader, config.num_classes, config.device
-    )
-    # TEMP
-    # wandb.log({"test_acc": test_acc, "test_f1": test_f1})
-    # TEMP
-
-    # Save model
-    save_model(model, test_loader)
+        # Save model
+        save_model(model, test_loader)
 
     return model
 
@@ -350,13 +330,12 @@ if __name__ == "__main__":
     test_run_n_samples = int(args.test_run_n_samples)
     # fmt: on
 
-    # TEMP
-    # wandb.login()
-    # TEMP
+    wandb.login()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     config = dict(
+        project_name="active-voice-classifier",
         random_seed=42,
         num_classes=3,
         batch_size=32,
@@ -371,14 +350,5 @@ if __name__ == "__main__":
     )
     if test_run:
         config["test_run_n_samples"] = test_run_n_samples
-
-    # TEMP
-    class Dict2Class(object):
-        def __init__(self, my_dict):
-            for key in my_dict:
-                setattr(self, key, my_dict[key])
-
-    config = Dict2Class(config)
-    # TEMP
 
     model_pipeline(config)
