@@ -20,3 +20,4 @@ dependencies:
     - wandb
     - torchmetrics
     - tqdm
+    - InquirerPy
