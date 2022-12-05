@@ -132,6 +132,7 @@ def handle_active_voice_annotation(sent: str, sent_index: str) -> Dict:
         Choice(-1, name="<DON'T KNOW>", enabled=False),
         Choice(1, name="active voice", enabled=False),
         Choice(0, name="passive voice", enabled=False),
+        Choice(2, name="both", enabled=False),
     ]
 
     active_voice_selection = inquirer.select(
@@ -145,7 +146,6 @@ def handle_active_voice_annotation(sent: str, sent_index: str) -> Dict:
         "active_voice_manual": active_voice_selection,
     }
     return annotation_row
-
 
 
 def handle_simplest_verb_annotation(sent: str, sent_index: str) -> Dict:
@@ -163,6 +163,7 @@ def handle_simplest_verb_annotation(sent: str, sent_index: str) -> Dict:
         Choice(-1, name="<DON'T KNOW>", enabled=False),
         Choice(1, name="simple verb", enabled=False),
         Choice(0, name="not simplest form of verb", enabled=False),
+        Choice(2, name="both", enabled=False),
     ]
 
     simple_verb_selection = inquirer.select(
@@ -193,6 +194,7 @@ def handle_no_hidden_verb_annotation(sent: str, sent_index: str) -> Dict:
         Choice(-1, name="<DON'T KNOW>", enabled=False),
         Choice(1, name="no hidden verbs", enabled=False),
         Choice(0, name="hidden verb(s)", enabled=False),
+        Choice(2, name="both", enabled=False),
     ]
 
     hidden_verb_selection = inquirer.select(
@@ -236,7 +238,14 @@ if __name__ == "__main__":
     logging.info(f"Annotator name: {annotator}")
 
     # Check which_annotate arg
-    supported_annotations = ["subj", "verb", "obj", "active", "simple_verb", "no_hidden_verb"]
+    supported_annotations = [
+        "subj",
+        "verb",
+        "obj",
+        "active",
+        "simple_verb",
+        "no_hidden_verb",
+    ]
     if which_annotate not in supported_annotations:
         raise Exception(f"Support for annotating {which_annotate} not implemented yet")
     logging.info(f"Which annotation: {which_annotate}")
@@ -309,7 +318,7 @@ if __name__ == "__main__":
         sent_index = row["sent-index"]
         sentence_dict = row["sentence_dict"]
         print(f"\nINDEX={idx}, sent-index={sent_index}")
-        # breakpoint()
+        breakpoint()
 
         tokens, token_idxs = get_tokens(sentence_dict)
         if len(tokens) == 0:
@@ -342,7 +351,6 @@ if __name__ == "__main__":
             anno_row = handle_simplest_verb_annotation(sent, sent_index)
         elif which_annotate == "no_hidden_verb":
             anno_row = handle_no_hidden_verb_annotation(sent, sent_index)
-
 
         anno_row["annotator"] = annotator
 
