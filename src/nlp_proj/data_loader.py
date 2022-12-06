@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from typing import List, Tuple
+from typing import List, Tuple, Union, Dict
 import logging
 import numpy as np
 

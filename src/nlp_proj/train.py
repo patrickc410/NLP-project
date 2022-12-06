@@ -7,17 +7,17 @@ import torch.nn as nn
 from tqdm import tqdm
 from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
 import transformers
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List, Union
+from types import SimpleNamespace
+from pprint import pformat
 
 # from dotenv import load_dotenv
 import logging
 
-from nlp_proj.model_active_voice import (
-    ActiveVoiceModel,
-    make_dataloader,
-    make_tokenizer,
-)
 from nlp_proj.data_loader import WikiManualActiveVoiceDataset
+from nlp_proj.model_optim_utils import make_model, make_optimizer, make_criterion
+from nlp_proj.config_utils import load_config
+from nlp_proj.dataset_utils import make_dataloader, make_tokenizer, make_datasets
 
 # load_dotenv()
 logging.getLogger().setLevel(logging.INFO)
@@ -66,8 +66,9 @@ def train_model(
     val_loader: DataLoader,
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
-    config,
+    config: SimpleNamespace,
 ):
+    """Full training loop"""
     # Device
     device = config.device
     model = model.to(device)
@@ -78,17 +79,28 @@ def train_model(
     # Run training and track with wandb
     example_ct = 0  # number of examples seen
     batch_ct = 0
-    for epoch in tqdm(range(config.epochs)):
+    for epoch in tqdm(range(config.max_epochs)):
 
         train_accs = []
         train_f1s = []
 
         for _, (batch_x, batch_y) in enumerate(train_loader):
-            # Push to device
-            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+            # Push batch_x to device
+            batch_x = batch_x.to(device)
+
+            # Push batch_y to device multitask
+            if config.multitask is True:
+                for label_col, labels_batch in batch_y.items():
+                    batch_y[label_col] = labels_batch.to(device)
+
+            # Push batch_y to device single task (and extract from batch_y dictionary)
+            else:
+                batch_y = batch_y[config.label_col].to(device)
 
             # Train
-            loss, outputs = train_batch(batch_x, batch_y, model, optimizer, criterion)
+            loss, outputs = train_batch(
+                batch_x, batch_y, model, optimizer, criterion, config
+            )
 
             # Predictions
             preds = torch.argmax(outputs, dim=-1)
@@ -119,7 +131,7 @@ def train_model(
         # fmt: on
 
         # fmt: off
-        val_acc, val_f1, _ = test_model(model, val_loader, config.num_classes, config.device)
+        val_acc, val_f1, _ = test_model(model, val_loader, config.num_classes, config.device, config)
         wandb.log({"epoch": epoch, "val_acc": val_acc, "val_f1": val_f1}, step=example_ct)
         logging.info(f"Epoch {epoch}, Validation Acc after {str(example_ct).zfill(5)} examples: {val_acc:.3f}")
         logging.info(f"Epoch {epoch}, Validation F1  after {str(example_ct).zfill(5)} examples: {val_f1:.3f}")
@@ -134,6 +146,7 @@ def train_batch(
     model: nn.Module,
     optimizer: torch.optim.Optimizer,
     criterion: nn.Module,
+    config: SimpleNamespace,
 ) -> Tuple[float, Tensor]:
     """Encapsulate the logic of a single batched training optimization step
     NOTE: assumes that model, batch_x, batch_y are on the same device already
@@ -144,6 +157,7 @@ def train_batch(
         model (nn.Module): _description_
         optimizer (torch.optim.Optimizer): _description_
         criterion (nn.Module): _description_
+        config
 
     Returns:
         Tuple[float, Tensor]: loss, model outputs
@@ -153,11 +167,27 @@ def train_batch(
     input_ids = batch_x.input_ids
     attention_mask = batch_x.attention_mask
     outputs = model(input_ids=input_ids, attention_mask=attention_mask)
-    loss = criterion(outputs, batch_y)
+
+    # Loss calculation
+    if config.multitask is True:
+        losses = []
+        for idx, crit in enumerate(criterion):
+            label_col = config.label_cols[idx]
+            batch_y = batch_y["label_col"]
+            loss = crit(outputs, batch_y)
+            losses.append(loss)
+        loss = torch.concat(*losses)
+        loss = torch.mean(loss)
+    else:
+        loss = criterion(outputs, batch_y)
 
     # Backward pass
     optimizer.zero_grad()
     loss.backward()
+
+    # Clip gradients
+    if hasattr(config, "clip_grad"):
+        nn.utils.clip_grad_norm_(model.parameters(), config.clip_grad)
 
     # Step with optimizer
     optimizer.step()
@@ -166,7 +196,11 @@ def train_batch(
 
 
 def test_model(
-    model: nn.Module, test_loader: DataLoader, num_classes: int, device: torch.device
+    model: nn.Module,
+    test_loader: DataLoader,
+    num_classes: int,
+    device: torch.device,
+    config: SimpleNamespace,
 ) -> Tuple[float, float, int]:
     """Test model performance over data in test_loader
 
@@ -175,6 +209,7 @@ def test_model(
         test_loader (DataLoader): _description_
         num_classes (int): _description_
         device (torch.device): _description_
+        config
 
     Returns:
         Tuple[float, float, int]:
@@ -185,27 +220,39 @@ def test_model(
 
     model.eval()
 
-    all_preds = torch.tensor([])
-    all_labels = torch.tensor([])
+    all_preds = []
+    all_labels = []
 
     # Run the model on some test examples
     with torch.no_grad():
         total = 0
         for batch_x, batch_y in test_loader:
-            # To device
-            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+            # Push batch_x to device
+            batch_x = batch_x.to(device)
+
+            # Push batch_y to device multitask
+            if config.multitask is True:
+                for label_col, labels_batch in batch_y.items():
+                    batch_y[label_col] = labels_batch.to(device)
+
+            # Push batch_y to device single task (and extract from batch_y dictionary)
+            else:
+                batch_y = batch_y[config.label_col].to(device)
 
             # Forward
             input_ids = batch_x.input_ids
             attention_mask = batch_x.attention_mask
             outputs = model(input_ids=input_ids, attention_mask=attention_mask)
 
-            # Predictions
+            # Predictions: TODO: handle multi-task predictions
             batch_preds = torch.argmax(outputs, dim=-1)
 
-            all_preds = torch.concat((all_preds, batch_preds))
-            all_labels = torch.concat((all_labels, batch_y))
+            all_preds.append(batch_preds)
+            all_labels.append(batch_y)
             total += batch_y.size(0)
+
+    all_preds = torch.concat(all_preds)
+    all_labels = torch.concat(all_labels)
 
     # Evaluation
     test_acc = accuracy_torch(all_preds, all_labels, num_classes)
@@ -227,7 +274,12 @@ def save_model(model: nn.Module, loader: DataLoader) -> None:
 def make(
     config,
 ) -> Tuple[
-    nn.Module, DataLoader, DataLoader, DataLoader, nn.Module, torch.optim.Optimizer
+    nn.Module,
+    DataLoader,
+    DataLoader,
+    DataLoader,
+    Union[nn.Module, List[nn.Module]],
+    torch.optim.Optimizer,
 ]:
     """
     Make model, train/val/test data loaders, loss criterion, and optimizer
@@ -239,35 +291,23 @@ def make(
     # Make tokenizer
     tokenizer = make_tokenizer()
     logging.info("Loaded tokenizer")
+    config.vocab_size = tokenizer.vocab_size
 
-    # Make the data
-    # fmt: off
-    train = WikiManualActiveVoiceDataset(config.train_data_filepath, drop_labels=["<DON'T KNOW>"])
-    logging.info(f"Loaded training data of length {len(train)}")
-    if config.test_run is True:
-        train.df = train.df.sample(n=config.test_run_n_samples, random_state=42)
-        logging.info(f"TEST RUN truncating training data to length {len(train)}")
-    train, val = random_split(train, [0.8, 0.2], generator=torch.Generator().manual_seed(config.random_seed))
-    logging.info(f"Made train (length {len(val)}), validation (length {len(val)}) data split")
-    test = WikiManualActiveVoiceDataset(config.test_data_filepath, drop_labels=["<DON'T KNOW>"])
-    logging.info(f"Loaded test data of length {len(test)}")
-    if config.test_run is True:
-        test.df = test.df.sample(n=config.test_run_n_samples, random_state=42)
-        logging.info(f"TEST RUN truncating test data to length {len(train)}")
+    # Make the data loaders
+    train, val, test = make_datasets(config)
     train_loader = make_dataloader(train, tokenizer, batch_size=config.batch_size)
     val_loader = make_dataloader(val, tokenizer, batch_size=config.batch_size)
     test_loader = make_dataloader(test, tokenizer, batch_size=config.batch_size)
     logging.info("Made data loaders")
-    # fmt: on
 
     # Make the model
-    model = ActiveVoiceModel()
+    model = make_model(config)
     logging.info("Loaded model")
     model = model.to(config.device)
 
     # Make the loss and optimizer
-    criterion = model.loss_criterion
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    criterion = make_criterion(config)
+    optimizer = make_optimizer(config, model)
     logging.info("Created loss criterion and optimizer")
 
     return model, train_loader, val_loader, test_loader, criterion, optimizer
@@ -304,7 +344,7 @@ def model_pipeline(config: Dict) -> nn.Module:
 
         # fmt: off
         # and test its final performance
-        test_acc, test_f1, sample_count = test_model(model, test_loader, config.num_classes, config.device)
+        test_acc, test_f1, sample_count = test_model(model, test_loader, config.num_classes, config.device, config)
         logging.info(f"Test Accuracy on the {str(sample_count).zfill(5)} test samples: {test_acc:.3f}")
         logging.info(f"Test F1       on the {str(sample_count).zfill(5)} test samples: {test_f1:.3f}")
         wandb.log({"test_acc": test_acc, "test_f1": test_f1})
@@ -321,34 +361,28 @@ if __name__ == "__main__":
     # fmt: off
     # Command line arguments
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--config_filepath", type=str, default=None)
+    parser.add_argument("--config_filepath", type=str, default=None)
     parser.add_argument("--test_run", default=False)
     parser.add_argument("--test_run_n_samples", default=30)
     args = parser.parse_args()
-    # config_filepath = args.config_filepath
+    config_filepath = args.config_filepath
     test_run = bool(args.test_run)
     test_run_n_samples = int(args.test_run_n_samples)
     # fmt: on
 
+    # Wandb setup
     wandb.login()
 
+    # Load config
+    config = load_config(config_filepath)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    config["device"] = device
+    logging.info("Loaded config:")
+    logging.info(pformat(config))
 
-    config = dict(
-        project_name="active-voice-classifier",
-        random_seed=42,
-        num_classes=3,
-        batch_size=32,
-        learning_rate=0.005,
-        epochs=5,
-        dataset="Wiki-Manual",
-        architecture="DistilBERT",
-        train_data_filepath="./data/stanza_annotate/train_annotations_active.jsonl",
-        test_data_filepath="./data/stanza_annotate/dev_annotations_active.jsonl",
-        device=device,
-        test_run=test_run,
-    )
-    if test_run:
+    # Test run setup
+    if test_run is True:
+        config["test_run"] = True
         config["test_run_n_samples"] = test_run_n_samples
 
     model_pipeline(config)
