@@ -318,7 +318,6 @@ if __name__ == "__main__":
         sent_index = row["sent-index"]
         sentence_dict = row["sentence_dict"]
         print(f"\nINDEX={idx}, sent-index={sent_index}")
-        breakpoint()
 
         tokens, token_idxs = get_tokens(sentence_dict)
         if len(tokens) == 0:
