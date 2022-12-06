@@ -1,6 +1,7 @@
 # Custom ignores
 data/*
 corenlp_server-*
+wandb/*
 
 
 # Byte-compiled / optimized / DLL files
