@@ -1,3 +1,10 @@
+""" 
+Script for training single task and multi-task models
+
+Set the WANDB_MODE environment variable to disabled for testing
+Set the WANDB_MODE environment variable to run when you want to save results to wandb experiment
+
+"""
 import wandb
 import argparse
 import torch
