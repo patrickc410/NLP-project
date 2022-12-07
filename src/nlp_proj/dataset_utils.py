@@ -20,6 +20,7 @@ class WikiManualAllLabelsDataset(Dataset):
         data_filepath: str,
         sent_col: str = "sent",
         label_cols: Union[List[str], None] = None,
+        tasks: Union[List[str], None] = None,
         drop_labels_list: Union[List[List], None] = None,
     ) -> None:
         """_summary_
@@ -40,6 +41,7 @@ class WikiManualAllLabelsDataset(Dataset):
         self.sent_col = sent_col
         self.label_cols = label_cols
         self.drop_labels_list = drop_labels_list
+        self.tasks = tasks
 
         # Verify sentence string column exists
         if sent_col not in self.df.columns:
@@ -51,6 +53,14 @@ class WikiManualAllLabelsDataset(Dataset):
         if label_cols is None:
             label_cols = ["svo_dist", "apv", "scv", "hv", "svo_dist_norm"]
             self.label_cols = label_cols
+            tasks = [
+                "regression",
+                "classification",
+                "classification",
+                "classification",
+                "regression",
+            ]
+            self.tasks = tasks
 
         # Verify label columns exist
         for label_col in label_cols:
@@ -75,17 +85,18 @@ class WikiManualAllLabelsDataset(Dataset):
                 )
                 self.df = self.df[~self.df[label_col].isin(drop_labels)]
 
-        # Transform labels into label indexes
+        # For classification tasks, transform labels into label indexes
         self.labels_list = []
         self.label_idxs_list = []
         self.label_counts_list = []
-        for label_col in label_cols:
-            labels, label_idxs, label_counts = np.unique(
-                self.df[label_col], return_inverse=True, return_counts=True
-            )
-            self.labels_list.append(labels)
-            self.label_counts_list.append(label_counts)
-            self.df[f"{label_col}_idx"] = label_idxs
+        for label_col, task in zip(label_cols, tasks):
+            if task == "classification":
+                labels, label_idxs, label_counts = np.unique(
+                    self.df[label_col], return_inverse=True, return_counts=True
+                )
+                self.labels_list.append(labels)
+                self.label_counts_list.append(label_counts)
+                self.df[f"{label_col}_idx"] = label_idxs
 
     def __len__(self) -> int:
         return len(self.df)
@@ -93,9 +104,14 @@ class WikiManualAllLabelsDataset(Dataset):
     def __getitem__(self, index: int) -> Tuple[str, Dict[str, int]]:
         """Return tuple with (sentence string, dictionary) where the dictionary contains all labels"""
         row = self.df.iloc[index]
-        return row[self.sent_col], {
-            label_col: row[f"{label_col}_idx"] for label_col in self.label_cols
-        }
+        y_dict = {}
+        for label_col, task in zip(self.label_cols, self.tasks):
+            if task == "classification":
+                y_dict[label_col] = row[f"{label_col}_idx"]
+            elif task == "regression":
+                y_dict[label_col] = row[label_col]
+
+        return row[self.sent_col], y_dict
 
 
 def make_tokenizer() -> DistilBertTokenizer:
@@ -183,6 +199,10 @@ def make_datasets(config: SimpleNamespace) -> Tuple[Dataset, Dataset, Dataset]:
         dataset_params["label_cols"] = config.label_cols
     if hasattr(config, "label_col"):
         dataset_params["label_cols"] = [config.label_col]
+    if hasattr(config, "tasks"):
+        dataset_params["tasks"] = config.tasks
+    if hasattr(config, "task"):
+        dataset_params["tasks"] = [config.task]
     if hasattr(config, "drop_labels_list"):
         dataset_params["drop_labels_list"] = config.drop_labels_list
 
