@@ -1,10 +1,11 @@
 # GENERAL
-project_name: "bilstm-svo_dist_norm"
+project_name: "bilstm-svo_dist"
 random_seed: 42
 test_run: False
 test_run_n_samples: 10
 device: "cuda:0"
 multitask: False
+results_dir: "results"
 
 # MODEL
 architecture: "BiLSTMRegressor"
@@ -18,13 +19,13 @@ start_epoch: 0
 max_epochs: 5
 early_stopping: False
 batch_size: 32
+shuffle: False
+task: "regression"
 
 # DATA
-train_data_filepath: "TODO"
-test_data_filepath: "TODO"
-dataset_name: "TODO"
-label_col: "svo_dist_norm"
-label_description: "subject verb object distance normalized"
+data_filepath: "data/rule_based_annotations.csv"
+label_col: "svo_dist"
+label_description: "subject verb object distance"
 label_criterion: "MSELoss"
 
 # OPTIMIZER

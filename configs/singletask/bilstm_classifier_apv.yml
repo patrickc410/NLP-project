@@ -5,6 +5,7 @@ test_run: False
 test_run_n_samples: 10
 device: "cuda:0"
 multitask: False
+results_dir: "results"
 
 # MODEL
 architecture: "BiLSTMClassifier"
@@ -15,9 +16,12 @@ num_layers: 2
 # TRAINING
 logging_freq: 20
 start_epoch: 0
-max_epochs: 5
-early_stopping: False
+max_epochs: 40
+early_stopping: True
+early_stopping_metric: "acc"
 batch_size: 32
+shuffle: False
+task: "classification"
 
 # DATA
 data_filepath: "data/rule_based_annotations.csv"
