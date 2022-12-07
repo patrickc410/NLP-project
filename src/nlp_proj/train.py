@@ -36,12 +36,21 @@ def save_model(model: nn.Module, loader: DataLoader, config: SimpleNamespace) ->
         attention_mask = batch_x.attention_mask
         break
 
-    # Save the model in the exchangeable ONNX format
+    # Save the model weights
     out_path: pathlib.Path = pathlib.Path(config.results_dir, f"{config.project_name}.pt")
-    torch.save(model, out_path)
+    try:
+        torch.save(model, out_path)
+    # Handle bug in which wandb hook interferes with saving model
+    except:
+        model._forward_hooks.pop(0)
+        torch.save(model, out_path)
+    
+    # Save in ONNX format
     torch.onnx.export(model, (input_ids, attention_mask), out_path.with_suffix(".onnx"))
-    wandb.save(out_path)
-    wandb.save(out_path.with_suffix(".onnx"))
+    
+    # Send to wandb
+    wandb.save(str(out_path))
+    wandb.save(str(out_path.with_suffix(".onnx")))
 
 
 def make(
