@@ -240,7 +240,7 @@ def make_datasets(config: SimpleNamespace) -> Tuple[Dataset, Dataset, Dataset]:
                 generator=torch.Generator().manual_seed(config.random_seed),
             )
         logging.info(
-            f"Made train (length {len(val)}), validation (length {len(val)}), and test (length {len(test)}) data split"
+            f"Made train (length {len(train)}), validation (length {len(val)}), and test (length {len(test)}) data split"
         )
 
     # Truncate for test runs
