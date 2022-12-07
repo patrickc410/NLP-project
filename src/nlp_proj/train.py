@@ -169,10 +169,20 @@ if __name__ == "__main__":
     config["device"] = device
     logging.info("Loaded config:")
     logging.info(pformat(config))
+    logging.info(pformat(config))
 
     # Test run setup
     if test_run is True:
         config["test_run"] = True
         config["test_run_n_samples"] = test_run_n_samples
+    
+    # Create results_dir direectory
+    results_dir = config["results_dir"]
+    if not pathlib.Path(results_dir).is_dir():
+        pathlib.Path(results_dir).mkdir(parents=True)
+        logging.info(f"Created results directory {results_dir}")
+    else:
+        logging.warning(f"Results directory {results_dir} already exists, and running may overwrite files")
 
+    # Run training and evaluation
     model_pipeline(config)
