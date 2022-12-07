@@ -103,10 +103,12 @@ def make_tokenizer() -> DistilBertTokenizer:
     return tokenizer
 
 
-def collate_all_labels(
-    batch: List[Tuple[str, Dict[str, int]]], tokenizer: DistilBertTokenizer
+def collate_multi_label(
+    batch: List[Tuple[str, Dict[str, int]]],
+    tokenizer: DistilBertTokenizer,
+    label_cols: List[str],
 ) -> Tuple[transformers.tokenization_utils_base.BatchEncoding, Dict[str, Tensor]]:
-    """Collate function
+    """Collate function for multi-task
 
     Args:
         batch (List[Tuple[str, Dict[str, int]]]): list of entries returned from WikiManualAllLabelsDataset
@@ -119,9 +121,8 @@ def collate_all_labels(
     batch_text = [text for text, _ in batch]
     batch_x = tokenizer(batch_text, return_tensors="pt", padding="longest")
 
-    # Get label dictionaries for each sample of the batch; determine label column names
+    # Get label dictionaries for each sample of the batch
     batch_label_dicts = [label_dict for _, label_dict in batch]
-    label_cols = batch_label_dicts[0].keys()
 
     # Loop over label columns, getting list of label values
     batch_labels = {}
@@ -134,18 +135,41 @@ def collate_all_labels(
     return batch_x, batch_y
 
 
+def collate_single_label(
+    batch: List[Tuple[str, int]], tokenizer: DistilBertTokenizer, label_col: str
+) -> Tuple[transformers.tokenization_utils_base.BatchEncoding, Tensor]:
+    """Collate for single label task"""
+    batch_text = [text for text, _ in batch]
+    batch_label_idxs = [label_dict[label_col] for _, label_dict in batch]
+    batch_x = tokenizer(batch_text, return_tensors="pt", padding="longest")
+    batch_y = torch.tensor(batch_label_idxs)
+    return batch_x, batch_y
+
+
 def make_dataloader(
     dataset: WikiManualAllLabelsDataset,
     tokenizer: DistilBertTokenizer,
-    batch_size: int = 32,
-    shuffle: bool = False,
+    config: SimpleNamespace,
 ):
-    return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        collate_fn=lambda batch: collate_all_labels(batch, tokenizer),
-        shuffle=shuffle,
-    )
+    """Make dataloader, using different collate function on single vs. multitask"""
+    if config.multitask is True:
+        return DataLoader(
+            dataset,
+            batch_size=config.batch_size,
+            collate_fn=lambda batch: collate_multi_label(
+                batch, tokenizer, config.label_cols
+            ),
+            shuffle=config.shuffle,
+        )
+    else:
+        return DataLoader(
+            dataset,
+            batch_size=config.batch_size,
+            collate_fn=lambda batch: collate_single_label(
+                batch, tokenizer, config.label_col
+            ),
+            shuffle=config.shuffle,
+        )
 
 
 def make_datasets(config: SimpleNamespace) -> Tuple[Dataset, Dataset, Dataset]:
