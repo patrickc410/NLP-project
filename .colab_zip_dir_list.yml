@@ -1,0 +1,8 @@
+required_directories:
+  - src
+  - configs
+  - data
+  - environment
+required_files:
+  - pyproject.toml
+  - setup.cfg
