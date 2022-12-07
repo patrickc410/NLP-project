@@ -69,5 +69,3 @@ class BiLSTMRegressor(BiLSTMClassifier):
     ):
         """Same as BiLSTMClassifier, but always has a single output node"""
         super().__init__(1, vocab_size, dim_emb, dim_hid, num_layers)
-
-        self.loss_criterion = nn.MSELoss()
