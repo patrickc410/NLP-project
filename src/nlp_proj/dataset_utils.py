@@ -219,11 +219,26 @@ def make_datasets(config: SimpleNamespace) -> Tuple[Dataset, Dataset, Dataset]:
         )
         logging.info(f"Loaded all data of length {len(dataset)}")
 
-        train, val, test = random_split(
-            dataset,
-            dataset_splits,
-            generator=torch.Generator().manual_seed(config.random_seed),
-        )
+        try:
+            train, val, test = random_split(
+                dataset,
+                dataset_splits,
+                generator=torch.Generator().manual_seed(config.random_seed),
+            )
+        # Handle issue with older pytorch versions' random_split() function
+        except:
+
+            N = dataset.df.shape[0]
+            dataset_splits_new = []
+            for split in dataset_splits:
+                dataset_splits_new.append(int(split * N))
+            if sum(dataset_splits_new) < N:
+                dataset_splits_new[-1] += N - sum(dataset_splits_new)
+            train, val, test = random_split(
+                dataset,
+                dataset_splits_new,
+                generator=torch.Generator().manual_seed(config.random_seed),
+            )
         logging.info(
             f"Made train (length {len(val)}), validation (length {len(val)}), and test (length {len(test)}) data split"
         )
