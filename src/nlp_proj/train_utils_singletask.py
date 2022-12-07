@@ -42,7 +42,7 @@ def train_batch_singletask(
 
     # Loss calculation
     if config.task == "regression":
-        batch_y = batch_y.float()
+        batch_y = batch_y.float().unsqueeze(1)
     loss = criterion(outputs, batch_y)
 
     # Backward pass
@@ -101,17 +101,18 @@ def train_model_singletask(
             train_evals["loss"].append(loss)
             # fmt: on
 
-            # Predictions and Train Eval
+            # Predictions and Train Eval; skip for batch size of 1
             # fmt: off
-            if config.task == "classification":
-                preds = torch.argmax(outputs, dim=-1)
-                train_evals["acc"].append(accuracy_torch(preds, batch_y, num_classes=config.num_classes, device=device))
-                train_evals["f1"].append(f1_torch(preds, batch_y, num_classes=config.num_classes, device=device))
-            elif config.task == "regression":
-                preds = outputs.squeeze()
-                train_evals["mae"].append(mean_absolute_error(preds, batch_y))
-                train_evals["mse"].append(mean_squared_error(preds, batch_y))
-                train_evals["r2"].append(r2_score(preds, batch_y))
+            if len(batch_y) > 1:
+                if config.task == "classification":
+                    preds = torch.argmax(outputs, dim=-1)
+                    train_evals["acc"].append(accuracy_torch(preds, batch_y, num_classes=config.num_classes, device=device))
+                    train_evals["f1"].append(f1_torch(preds, batch_y, num_classes=config.num_classes, device=device))
+                elif config.task == "regression":
+                    preds = outputs.squeeze()
+                    train_evals["mae"].append(mean_absolute_error(preds, batch_y))
+                    train_evals["mse"].append(mean_squared_error(preds, batch_y))
+                    train_evals["r2"].append(r2_score(preds, batch_y))
             # fmt: on
 
             # Increment

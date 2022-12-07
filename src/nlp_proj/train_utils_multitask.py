@@ -117,19 +117,20 @@ def train_model_multitask(
             for c, c_loss in zip(config.label_cols, losses):
                 train_evals[c]["loss"].append(c_loss)
 
-            # Predictions and Evaluation
+            # Predictions and Evaluation; skip for batch size of 1
             # fmt: off
-            for output, c, task, classes in zip(outputs, config.label_cols, config.tasks, config.num_classes_list):
-                batch_y_c = batch_y[c]
-                if task == "classification":
-                    preds = torch.argmax(output, dim=-1)
-                    train_evals[c]["acc"].append(accuracy_torch(preds, batch_y_c, num_classes=classes, device=device))
-                    train_evals[c]["f1"].append(f1_torch(preds, batch_y_c, num_classes=classes, device=device))
-                elif task == "regression":
-                    preds = output.squeeze()
-                    train_evals[c]["mae"].append(mean_absolute_error(preds, batch_y_c))
-                    train_evals[c]["mse"].append(mean_squared_error(preds, batch_y_c))
-                    train_evals[c]["r2"].append(r2_score(preds, batch_y_c))
+            if len(batch_y[config.label_cols[0]]) > 1:
+                for output, c, task, classes in zip(outputs, config.label_cols, config.tasks, config.num_classes_list):
+                    batch_y_c = batch_y[c]
+                    if task == "classification":
+                        preds = torch.argmax(output, dim=-1)
+                        train_evals[c]["acc"].append(accuracy_torch(preds, batch_y_c, num_classes=classes, device=device))
+                        train_evals[c]["f1"].append(f1_torch(preds, batch_y_c, num_classes=classes, device=device))
+                    elif task == "regression":
+                        preds = output.squeeze()
+                        train_evals[c]["mae"].append(mean_absolute_error(preds, batch_y_c))
+                        train_evals[c]["mse"].append(mean_squared_error(preds, batch_y_c))
+                        train_evals[c]["r2"].append(r2_score(preds, batch_y_c))
             # fmt: on
 
             # Increment
@@ -138,7 +139,7 @@ def train_model_multitask(
             batch_ct += 1
 
             # Report metrics every batch
-            if ((batch_ct + 1) % 5) == 0:
+            if ((batch_ct + 1) % config.logging_freq) == 0:
                 # fmt: off
                 log_dict = {"epoch": epoch, "batch_ct": batch_ct}
                 for c, metric_dict in train_evals.items():
