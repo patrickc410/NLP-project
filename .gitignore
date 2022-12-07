@@ -2,6 +2,7 @@
 data/*
 corenlp_server-*
 wandb/*
+results/*
 
 
 # Byte-compiled / optimized / DLL files
