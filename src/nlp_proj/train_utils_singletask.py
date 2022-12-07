@@ -124,7 +124,7 @@ def train_model_singletask(
                 log_dict = {"epoch": epoch, "batch_ct": batch_ct}
                 for metric_name, values in train_evals.items():
                     log_dict[f"train_batch_{metric_name}"] = values[-1]
-                    logging.info(f"Epoch {epoch}, Training   {metric_name.ljust(6)} after {str(batch_ct).zfill(5)} batches: {loss:.3f}")
+                    logging.info(f"Epoch {epoch}, Training   {metric_name.ljust(6)} after {str(batch_ct).zfill(5)} batches: {values[-1]:.3f}")
                 wandb.log(log_dict, step=example_ct)
                 # fmt: on
 
