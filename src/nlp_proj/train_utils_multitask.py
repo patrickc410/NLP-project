@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from torchmetrics.functional import mean_absolute_error, mean_squared_error, r2_score
 from nlp_proj.metric_utils import f1_torch, accuracy_torch
 import logging
+from copy import deepcopy
 
 
 def train_batch_multitask(
@@ -90,6 +91,7 @@ def train_model_multitask(
     # Run training and track with wandb
     example_ct = 0  # number of examples seen
     batch_ct = 0
+    last_val_evaluation = None
     for epoch in tqdm(range(config.max_epochs)):
 
         # Setup training evaluation dictionaries
@@ -174,6 +176,15 @@ def train_model_multitask(
                 log_dict[f"val_{c}_{metric_name}"] = value
                 logging.info(f"Epoch {epoch}, Validation {c.ljust(12)} {metric_name.ljust(6)} after {str(batch_ct).zfill(5)} batches: {value:.3f}")
         # fmt: on
+
+        # Early stopping check
+        if config.early_stopping is True and last_val_evaluation is not None:
+            met = config.early_stopping_metric
+            c = config.early_stopping_label_col
+            if val_evaluation[c][met] < last_val_evaluation[c][met]:
+                logging.info(f"Epoch {epoch}, Early stopping")
+                break
+        last_val_evaluation = deepcopy(val_evaluation)
 
     return model
 
