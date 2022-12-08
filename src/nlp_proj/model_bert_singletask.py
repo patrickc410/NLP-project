@@ -35,3 +35,8 @@ class BERTClassifier(nn.Module):
         pooled_output = pretrained_out[:, 0]  # (bs, dim)
         x = self.head(pooled_output)  # (bs, 1)
         return x
+
+
+class BERTRegressor(BERTClassifier):
+    def __init__(self, dim_hid: int = 20, freeze_pretrained: bool = False) -> None:
+        super().__init__(1, dim_hid, freeze_pretrained)

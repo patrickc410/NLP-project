@@ -45,6 +45,13 @@ def make_model(config: SimpleNamespace) -> Tuple[nn.Module]:
             dim_hid=config.dim_hid,
             freeze_pretrained=config.freeze_pretrained,
         )
+    elif config.architecture == "BERTRegressor":
+        model_arch = BERTClassifier
+        model_params = dict(
+            dim_hid=config.dim_hid,
+            freeze_pretrained=config.freeze_pretrained,
+        )
+
     else:
         raise Exception(f"model architecture {config.architecture} not supported")
     

@@ -1,5 +1,5 @@
 # GENERAL
-project_name: "bert-apv"
+project_name: "bert-svo_dist"
 random_seed: 42
 test_run: False
 test_run_n_samples: 10
@@ -8,26 +8,25 @@ multitask: False
 results_dir: "results"
 
 # MODEL
-architecture: "BERTClassifier"
+architecture: "BERTRegressor"
 dim_hid: 20
 freeze_pretrained: False
 
 # TRAINING
 logging_freq: 20
 start_epoch: 0
-max_epochs: 3
+max_epochs: 7
 early_stopping: True
-early_stopping_metric: "f1"
+early_stopping_metric: "r2"
 batch_size: 32
 shuffle: False
-task: "classification"
+task: "regression"
 
 # DATA
-data_filepath: "data/rule_based_annotations_old_svo_dist.csv"
-num_classes: 3
-label_col: "apv"
-label_description: "active/passive voice"
-label_criterion: "CrossEntropyLoss"
+data_filepath: "data/rule_based_annotations.csv"
+label_col: "svo_dist"
+label_description: "subject verb object distance"
+label_criterion: "MSELoss"
 
 # OPTIMIZER
 optimizer: "ADAM"
