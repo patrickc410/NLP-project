@@ -92,6 +92,8 @@ def make(
     criterion = make_criterion(config)
     optimizer = make_optimizer(config, model)
     logging.info("Created loss criterion and optimizer")
+    logging.info(pformat(criterion))
+    logging.info(pformat(optimizer))
 
     return model, train_loader, val_loader, test_loader, criterion, optimizer
 
