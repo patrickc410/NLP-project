@@ -221,8 +221,12 @@ def test_model_singletask(
     # Evaluation
     evaluation = {}
     if config.task == "classification":
-        evaluation["acc"] = accuracy_torch(all_preds, all_labels, config.num_classes)
-        evaluation["f1"] = f1_torch(all_preds, all_labels, config.num_classes)
+        evaluation["acc"] = accuracy_torch(
+            all_preds, all_labels, config.num_classes, device=device
+        )
+        evaluation["f1"] = f1_torch(
+            all_preds, all_labels, config.num_classes, device=device
+        )
     elif config.task == "regression":
         evaluation["mae"] = mean_absolute_error(all_preds, all_labels)
         evaluation["mse"] = mean_squared_error(all_preds, all_labels)
