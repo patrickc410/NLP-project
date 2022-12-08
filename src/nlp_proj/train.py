@@ -32,18 +32,16 @@ logging.getLogger().setLevel(logging.INFO)
 def save_model(model: nn.Module, loader: DataLoader, config: SimpleNamespace) -> None:
     """ Save model"""
     for batch_x, _ in loader:
-        input_ids = batch_x.input_ids
-        attention_mask = batch_x.attention_mask
+        input_ids = batch_x.input_ids.to(config.device)
+        attention_mask = batch_x.attention_mask.to(config.device)
         break
 
     # Save the model weights
-    out_path: pathlib.Path = pathlib.Path(config.results_dir, f"{config.project_name}.pt")
-    try:
-        torch.save(model, out_path)
+    out_path = pathlib.Path(config.results_dir, f"{config.project_name}.pt")
     # Handle bug in which wandb hook interferes with saving model
-    except:
-        model._forward_hooks.pop(0)
-        torch.save(model, out_path)
+    if len(model._forward_hooks.keys()) > 0:
+        model._forward_hooks.clear()
+    torch.save(model, out_path)
     
     # Save in ONNX format
     torch.onnx.export(model, (input_ids, attention_mask), out_path.with_suffix(".onnx"))
@@ -81,10 +79,13 @@ def make(
     val_loader = make_dataloader(val, tokenizer, config)
     test_loader = make_dataloader(test, tokenizer, config)
     logging.info("Made data loaders")
+    wandb.log({"train_samples": len(train), "val_samples": len(val), "test_samples": len(test)})
 
     # Make the model
     model = make_model(config)
-    logging.info("Loaded model")
+    model_n_params = sum([p.numel() for p in model.parameters() if p.requires_grad])
+    logging.info(f"Loaded model with {model_n_params} trainable parameters")
+    wandb.log({"model_n_params": model_n_params})
     model = model.to(config.device)
 
     # Make the loss and optimizer
