@@ -15,7 +15,7 @@ freeze_pretrained: False
 # TRAINING
 logging_freq: 20
 start_epoch: 0
-max_epochs: 7
+max_epochs: 3
 early_stopping: True
 early_stopping_metric: "r2"
 batch_size: 32
