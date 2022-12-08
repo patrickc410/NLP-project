@@ -82,7 +82,7 @@ def make_optimizer(config: SimpleNamespace, model: nn.Module) -> optim.Optimizer
     param_groups = []
     if config.architecture in ["BiLSTMClassifier", "BiLSTMRegressor", "BiLSTMMultitask"]:
         param_groups.append({"params": model.parameters()})
-    elif config.architecture in ["BERTClassifier"]:
+    elif config.architecture in ["BERTClassifier", "BERTRegressor"]:
         param_groups.append({"params": model.head.parameters()})
         if not config.freeze_pretrained:
             param_groups.append({"params": model.pretrained_layers.parameters(), "lr": config.base_lr * 0.02})
