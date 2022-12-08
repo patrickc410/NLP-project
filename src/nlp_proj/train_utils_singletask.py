@@ -215,8 +215,8 @@ def test_model_singletask(
             all_labels.append(batch_y)
             total += batch_y.size(0)
 
-    all_preds = torch.concat(all_preds)
-    all_labels = torch.concat(all_labels)
+    all_preds = torch.concat(all_preds).to(device)
+    all_labels = torch.concat(all_labels).to(device)
 
     # Evaluation
     evaluation = {}

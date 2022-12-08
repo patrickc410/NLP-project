@@ -235,8 +235,10 @@ def test_model_multitask(
             c = config.label_cols[0]
             total += batch_y[c].size(0)
 
-    all_preds = {c: torch.concat(preds) for c, preds in all_preds.items()}
-    all_labels = {c: torch.concat(labels) for c, labels in all_labels.items()}
+    all_preds = {c: torch.concat(preds).to(device) for c, preds in all_preds.items()}
+    all_labels = {
+        c: torch.concat(labels).to(device) for c, labels in all_labels.items()
+    }
 
     # Evaluation
     evaluation = {c: {} for c in config.label_cols}
