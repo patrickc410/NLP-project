@@ -4,6 +4,7 @@ from typing import Tuple, Union, List, Dict
 import torch.nn as nn
 from types import SimpleNamespace
 import torch.optim as optim
+import torch
 
 def make_model(config: SimpleNamespace) -> Tuple[nn.Module]:
     """Make model according to configuration"""
@@ -75,6 +76,17 @@ def _make_criterion(name: str, params: Dict = None) -> nn.Module:
         return nn.CrossEntropyLoss(**params)
     if name.lower() == "MSELoss".lower():
         return nn.MSELoss(**params)
+    if name.lower() == "FocalLoss".lower():
+        alpha = params["alpha"]
+        focal_loss = torch.hub.load(
+            'adeelh/pytorch-multi-class-focal-loss',
+            model='FocalLoss',
+            alpha=torch.tensor(alpha),
+            gamma=2,
+            reduction='mean',
+            force_reload=False
+        )
+        return focal_loss
     else:
         raise Exception(f"Criterion {name} not supported")
     
@@ -90,7 +102,10 @@ def make_criterion(config: SimpleNamespace) -> Union[nn.Module, List[nn.Module]]
         return criterion_list
     
     # Single-task
-    criterion = _make_criterion(config.label_criterion)
-    return criterion
+    params = {}
+    if hasattr(config, "alpha"):
+        params["alpha"] = config.alpha
+    criterion = _make_criterion(config.label_criterion, params)
+    return criterion.to(config.device)
 
     
