@@ -15,7 +15,8 @@ num_layers: 2
 
 # TRAINING
 start_epoch: 0
-max_epochs: 5
+max_epochs: 7
+logging_freq: 20
 early_stopping: False
 batch_size: 32
 shuffle: False
