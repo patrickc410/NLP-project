@@ -35,6 +35,8 @@ def train_batch_singletask(
         Tuple[float, Tensor]: loss, model outputs
     """
 
+    model.train()
+
     # Forward pass
     input_ids = batch_x.input_ids
     attention_mask = batch_x.attention_mask

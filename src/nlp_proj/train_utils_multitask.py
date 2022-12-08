@@ -37,6 +37,7 @@ def train_batch_multitask(
             list of losses for all heads
             list of model output tensors for all heads
     """
+    model.train()
 
     # Forward pass
     input_ids = batch_x.input_ids
