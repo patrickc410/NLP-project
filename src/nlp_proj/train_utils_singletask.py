@@ -7,7 +7,13 @@ from tqdm import tqdm
 import transformers
 from typing import Tuple, Dict
 from types import SimpleNamespace
-from torchmetrics.functional import mean_absolute_error, mean_squared_error, r2_score
+from torchmetrics.functional import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+    recall,
+    precision,
+)
 from nlp_proj.metric_utils import f1_torch, accuracy_torch
 import logging
 
@@ -228,6 +234,20 @@ def test_model_singletask(
         )
         evaluation["f1"] = f1_torch(
             all_preds, all_labels, config.num_classes, device=device
+        )
+        evaluation["recall"] = recall(
+            all_preds,
+            all_labels,
+            average="macro",
+            num_classes=config.num_classes,
+            task="multiclass",
+        )
+        evaluation["precision"] = precision(
+            all_preds,
+            all_labels,
+            average="macro",
+            num_classes=config.num_classes,
+            task="multiclass",
         )
     elif config.task == "regression":
         evaluation["mae"] = mean_absolute_error(all_preds, all_labels)
