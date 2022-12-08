@@ -1,5 +1,6 @@
 from nlp_proj.model_bilstm_baseline import BiLSTMClassifier, BiLSTMRegressor
 from nlp_proj.model_bilstm_multitask import BiLSTMMultitask
+from nlp_proj.model_bert_singletask import BERTClassifier
 from typing import Tuple, Union, List, Dict
 import torch.nn as nn
 from types import SimpleNamespace
@@ -37,6 +38,13 @@ def make_model(config: SimpleNamespace) -> Tuple[nn.Module]:
             dim_hid=config.dim_hid,
             num_layers=config.num_layers,
         )
+    elif config.architecture == "BERTClassifier":
+        model_arch = BERTClassifier
+        model_params = dict(
+            num_classes=config.num_classes,
+            dim_hid=config.dim_hid,
+            freeze_pretrained=config.freeze_pretrained,
+        )
     else:
         raise Exception(f"model architecture {config.architecture} not supported")
     
@@ -64,8 +72,15 @@ def make_optimizer(config: SimpleNamespace, model: nn.Module) -> optim.Optimizer
         weight_decay=config.weight_decay,
     )
 
+    param_groups = []
+    if config.architecture in ["BiLSTMClassifier", "BiLSTMRegressor", "BiLSTMMultitask"]:
+        param_groups.append({"params": model.parameters()})
+    elif config.architecture in ["BERTClassifier"]:
+        param_groups.append({"params": model.head.parameters()})
+        if not config.freeze_pretrained:
+            param_groups.append({"params": model.pretrained_layers.parameters(), "lr": config.base_lr * 0.02})
     
-    optimizer = optim_type(model.parameters(), **optim_params)
+    optimizer = optim_type(param_groups, **optim_params)
     return optimizer
     
 
