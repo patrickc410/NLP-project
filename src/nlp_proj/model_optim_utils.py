@@ -1,6 +1,6 @@
 from nlp_proj.model_bilstm_baseline import BiLSTMClassifier, BiLSTMRegressor
 from nlp_proj.model_bilstm_multitask import BiLSTMMultitask
-from nlp_proj.model_bert_singletask import BERTClassifier
+from nlp_proj.model_bert_singletask import BERTClassifier, BERTRegressor
 from typing import Tuple, Union, List, Dict
 import torch.nn as nn
 from types import SimpleNamespace
@@ -46,7 +46,7 @@ def make_model(config: SimpleNamespace) -> Tuple[nn.Module]:
             freeze_pretrained=config.freeze_pretrained,
         )
     elif config.architecture == "BERTRegressor":
-        model_arch = BERTClassifier
+        model_arch = BERTRegressor
         model_params = dict(
             dim_hid=config.dim_hid,
             freeze_pretrained=config.freeze_pretrained,
