@@ -20,10 +20,10 @@ class BERTClassifier(nn.Module):
                 param.requires_grad = False
 
         self.head = nn.Sequential()
-        self.head.add_module("fc_1", nn.Linear(768, dim_hid))
+        self.head.add_module("fc_1", nn.Linear(768, self.dim_hid))
         self.head.add_module("relu_1", nn.ReLU())
         self.head.add_module("dropout", nn.Dropout(0.1))
-        self.head.add_module("fc_2", nn.Linear(dim_hid, 3))
+        self.head.add_module("fc_2", nn.Linear(self.dim_hid, self.num_classes))
 
     def forward(self, input_ids: Tensor, attention_mask: Tensor) -> Tensor:
         """Use last hidden state of first token as the "pooled" output of the pre-trained model,
