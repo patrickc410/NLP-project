@@ -16,7 +16,7 @@ num_layers: 2
 # TRAINING
 logging_freq: 20
 start_epoch: 0
-max_epochs: 5
+max_epochs: 20
 early_stopping: True
 early_stopping_metric: "f1"
 batch_size: 32
@@ -28,7 +28,11 @@ data_filepath: "data/train_auto_annotations_UPDATED.csv"
 num_classes: 3
 label_col: "hv"
 label_description: "hidden verbs"
-label_criterion: "CrossEntropyLoss"
+label_criterion: "FocalLoss"
+alpha: 
+- 0.01
+- 0.98
+- 0.01
 
 # OPTIMIZER
 optimizer: "ADAM"
