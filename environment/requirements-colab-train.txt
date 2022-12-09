@@ -1,0 +1,5 @@
+black
+transformers
+wandb
+torchmetrics
+tqdm

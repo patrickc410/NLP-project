@@ -1,0 +1,42 @@
+# GENERAL
+project_name: "bilstm-hv"
+random_seed: 42
+test_run: False
+test_run_n_samples: 10
+device: "cuda:0"
+multitask: False
+results_dir: "results"
+
+# MODEL
+architecture: "BiLSTMClassifier"
+dim_emb: 256
+dim_hid: 20
+num_layers: 2
+
+# TRAINING
+logging_freq: 20
+start_epoch: 0
+max_epochs: 20
+early_stopping: True
+early_stopping_metric: "f1"
+batch_size: 32
+shuffle: False
+task: "classification"
+
+# DATA
+data_filepath: "data/train_auto_annotations_UPDATED.csv"
+num_classes: 3
+label_col: "hv"
+label_description: "hidden verbs"
+label_criterion: "FocalLoss"
+alpha: 
+- 0.01
+- 0.98
+- 0.01
+
+# OPTIMIZER
+optimizer: "ADAM"
+base_lr: 0.001
+weight_decay: 0.0001
+grad_clip: 5
+

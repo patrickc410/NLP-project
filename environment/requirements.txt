@@ -1,0 +1,14 @@
+jupyter
+matplotlib
+numpy
+pytest
+torch
+black
+pandas
+stanza
+datasets
+transformers
+wandb
+torchmetrics
+tqdm
+InquirerPy
