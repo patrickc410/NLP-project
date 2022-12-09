@@ -1,6 +1,7 @@
 from nlp_proj.model_bilstm_baseline import BiLSTMClassifier, BiLSTMRegressor
 from nlp_proj.model_bilstm_multitask import BiLSTMMultitask
 from nlp_proj.model_bert_singletask import BERTClassifier, BERTRegressor
+from nlp_proj.model_bert_multitask import BERTMultitask
 from typing import Tuple, Union, List, Dict
 import torch.nn as nn
 from types import SimpleNamespace
@@ -51,6 +52,13 @@ def make_model(config: SimpleNamespace) -> Tuple[nn.Module]:
             dim_hid=config.dim_hid,
             freeze_pretrained=config.freeze_pretrained,
         )
+    elif config.architecture == "BERTMultitask":
+        model_arch = BERTMultitask
+        model_params = dict(
+            num_classes_list=config.num_classes_list,
+            dim_hid=config.dim_hid,
+            freeze_pretrained=config.freeze_pretrained,
+        )
 
     else:
         raise Exception(f"model architecture {config.architecture} not supported")
@@ -84,6 +92,10 @@ def make_optimizer(config: SimpleNamespace, model: nn.Module) -> optim.Optimizer
         param_groups.append({"params": model.parameters()})
     elif config.architecture in ["BERTClassifier", "BERTRegressor"]:
         param_groups.append({"params": model.head.parameters()})
+        if not config.freeze_pretrained:
+            param_groups.append({"params": model.pretrained_layers.parameters(), "lr": config.base_lr * 0.02})
+    elif config.architecture in ["BERTMultitask"]:
+        param_groups.append({"params": model.heads.parameters()})
         if not config.freeze_pretrained:
             param_groups.append({"params": model.pretrained_layers.parameters(), "lr": config.base_lr * 0.02})
     
