@@ -1,0 +1,52 @@
+# GENERAL
+project_name: "bert-multitask"
+random_seed: 42
+test_run: False
+test_run_n_samples: 10
+device: "cuda:0"
+multitask: True
+results_dir: "results"
+
+# MODEL
+architecture: "BERTMultitask"
+dim_hid: 64
+freeze_pretrained: False
+
+# TRAINING
+logging_freq: 20
+start_epoch: 0
+max_epochs: 3
+early_stopping: True
+early_stopping_metric: "f1"
+early_stopping_label_col: "scv"
+batch_size: 32
+shuffle: False
+tasks:
+- "regression"
+- "classification"
+- "classification"
+- "classification"
+
+# DATA
+data_filepath: "data/rule_based_annotations_old_svo_dist.csv"
+num_classes_list:
+- 1
+- 3
+- 3
+- 3
+label_cols:
+- "svo_dist"
+- "apv"
+- "scv"
+- "hv"
+label_criterion:
+- "MSELoss"
+- "CrossEntropyLoss"
+- "CrossEntropyLoss"
+- "CrossEntropyLoss"
+
+# OPTIMIZER
+optimizer: "ADAM"
+base_lr: 0.001
+weight_decay: 0.0001
+grad_clip: 5
