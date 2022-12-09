@@ -1,6 +1,9 @@
 # Custom ignores
 data/*
 corenlp_server-*
+wandb/*
+results/*
+nlp_proj_colab.zip
 
 
 # Byte-compiled / optimized / DLL files

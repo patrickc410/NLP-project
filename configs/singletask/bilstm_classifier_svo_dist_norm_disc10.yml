@@ -1,0 +1,37 @@
+# GENERAL
+project_name: "bilstm-svo_dist_norm_disc10"
+random_seed: 42
+test_run: False
+test_run_n_samples: 10
+device: "cuda:0"
+multitask: False
+
+# MODEL
+architecture: "BiLSTMClassifier"
+dim_emb: 256
+dim_hid: 20
+num_layers: 2
+
+# TRAINING
+logging_freq: 20
+start_epoch: 0
+max_epochs: 10
+early_stopping: True
+early_stopping_metric: "f1"
+batch_size: 32
+shuffle: False
+task: "classification"
+results_dir: "results"
+
+# DATA
+data_filepath: "data/train_auto_annotations_UPDATED_cleaned.csv"
+num_classes: 10
+label_col: "svo_dist_norm_disc10"
+label_description: "subject verb object distance, discretized into 10 bins"
+label_criterion: "CrossEntropyLoss"
+
+# OPTIMIZER
+optimizer: "ADAM"
+base_lr: 0.001
+weight_decay: 0.0001
+grad_clip: 5
