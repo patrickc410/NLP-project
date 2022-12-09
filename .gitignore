@@ -2,7 +2,6 @@
 data/*
 corenlp_server-*
 wandb/*
-results/*
 nlp_proj_colab.zip
 .DS_Store
 **/.DS_Store
