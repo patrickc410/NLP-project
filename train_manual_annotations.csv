@@ -1,0 +1,61 @@
+sent-index,sent,svo_dist,apv,scv,hv,svo_dist_norm
+350_691837-0-0-0,The Gandalf Awards honor excellent writing in in fantasy literature.,4,1,1,1,0.3636363636363636
+350_691837-0-0-1,The World Science Fiction Society gave the awards each year from 1974 to 1981.,6,1,1,1,0.4
+350_691837-0-0-2,They were named for Gandalf the wizard from the Middle-earth stories by J. R. R. Tolkien.,4,0,0,1,0.2105263157894736
+350_691837-0-0-3,The award was started and sponsored by Lin Carter and the Swordsmen and Sorcerers' Guild of America (SAGA).,16,0,0,1,0.7272727272727273
+350_691837-0-0-4,People at the World Science Fiction Conventions voted to choose the winners.,11,1,1,1,0.8461538461538461
+350_691837-0-0-5,They used the same rules as the older Hugo Awards.,4,1,1,1,0.3636363636363636
+350_691837-0-1-0,"The awards were given in two categories: one, for life achievement, and two, for a book published the year before.",2,0,0,1,0.08
+350_691837-0-2-0,The Gandalf Grand Master Award for life achievement in fantasy writing was awarded every year from 1974 to 1981.,11,0,0,1,0.55
+350_691837-0-2-1,The first winner was J. R. R. Tolkien who had died recently in 1973.,8,1,2,1,0.5333333333333333
+350_691837-0-3-0,"The next four Grand Masters were all members of the SAGA: Fritz Leiber, L. Sprague de Camp, Andre Norton, and Poul Anderson.",4,1,1,1,0.1481481481481481
+350_691837-0-3-1,"The last three were Ursula K. Le Guin, Ray Bradbury, and C. L. Moore.",13,1,1,1,0.7647058823529411
+350_691837-0-3-2,There was no voting in 1981.,2,1,1,1,0.2857142857142857
+350_691837-0-4-0,The Gandalf Award for Book-Length Fantasy was awarded only in 1978 and 1979.,8,0,0,1,0.5
+350_691837-0-4-1,Again the first winner was Tolkien.,2,1,1,1,0.2857142857142857
+350_691837-0-4-2,"The winning book was ""The Silmarillion"" with Christopher Tolkien as editor.",5,1,1,1,0.3571428571428571
+350_691837-0-4-3,"The second was ""The White Dragon"" by Anne McCaffrey.",6,1,1,1,0.5
+350_691837-0-4-4,"Fantasy fiction often wins the older Hugo Award for Best Novel, so Worldcon organizers thought the Gandalf Award may be a duplicate and this was not awarded again.",27,2,2,1,0.9
+351_443763-0-0-0,"Meatloaf is a dish of ground meat formed into a loaf shape, mixed with other ingredients, then baked or smoked.",3,1,1,1,0.1304347826086956
+351_443763-0-0-1,"Meatloaf is usually made from ground beef, although lamb, pork, veal, venison, and poultry are also used.",21,0,0,1,0.9130434782608696
+352_417959-0-0-0,"Louis Burt Mayer (July 12, 1884 – October 29, 1957) was an American movie producer.",18,1,1,1,0.9
+352_417959-0-0-1,He was born Lazar Meir to Russian Jewish parents in Minsk (which is today in Belarus).,16,1,1,1,0.8421052631578947
+352_417959-0-0-2,He was a part of Metro-Goldwyn-Mayer.,9,1,1,1,0.8181818181818182
+352_417959-0-0-3,He was a founder of the Academy Awards.,7,1,1,1,0.7777777777777778
+352_417959-0-0-4,He died of leukemia.,3,1,1,1,0.6
+353_269454-0-0-0,"Robbie Coltrane OBE (born Anthony Robert McMillan on 30 March 1950), is a Scottish actor, comedian and author.",19,1,1,1,0.8260869565217391
+353_269454-0-0-1,"He is known both for his role as Dr. Eddie ""Fitz"" Fitzgerald in the British TV series ""Cracker"" during the 1990s and as Rubeus Hagrid in the ""Harry Potter"" movies.",35,1,1,1,0.945945945945946
+353_269454-0-1-0,"Coltrane was born in Rutherglen, South Lanarkshire.",7,1,1,1,0.7777777777777778
+353_269454-0-1-1,He now lives in Killearn Stirlingshire.,5,1,0,1,0.7142857142857143
+353_269454-0-1-2,"He has a son, Spencer and daughter, Alice.",9,1,1,1,0.8181818181818182
+353_269454-0-2-0,Coltrane began his acting career in his early twenties.,4,1,1,1,0.4
+353_269454-0-2-1,"He took the stage name Coltrane in tribute to jazz saxophonist John Coltrane In 2006, Robbie received an OBE for his services to drama.",24,1,1,1,0.9230769230769232
+354_599948-0-0-0,"Kannur District is one of the 14 districts along the west coast in the state of Kerala, India.",14,1,1,1,0.7
+354_599948-0-0-1,The town of Kannur is the district headquarters and gives the district its name.,10,1,1,1,0.6666666666666666
+354_599948-0-0-2,"The old name, Cannanore is the anglicised form of the Malayalam name ""Kannur"".",13,1,1,1,0.7647058823529411
+354_599948-0-0-3,"Kannur district is bounded by Kasaragod District to the north, Kozhikode district to the south and Wayanad District to the southeast.",18,1,1,1,0.782608695652174
+354_599948-0-0-4,"To the east the district is bounded by the Western Ghats, which forms the border with the state of Karnataka (Kodagu district).",20,0,1,2,0.7692307692307693
+354_599948-0-0-5,The Arabian Sea lies to the west.,5,1,1,1,0.625
+354_599948-0-0-6,The district was established in 1957.,4,1,1,1,0.5714285714285714
+354_599948-0-1-0,"Kannur is the sixth-most urbanized district in Kerala, with more than 50% of its residents living in urban areas.",20,1,1,1,0.9090909090909092
+354_599948-0-1-1,"Kannur has an urban population of 1,212,898, which is the second largest in Kerala after Ernakulam district.",9,1,1,1,0.4736842105263157
+354_599948-0-2-0,"Kannur District is known as the land of looms and lores, because of the loom industries and ritualistic festivals held here in temples.",10,0,0,1,0.4
+354_599948-0-2-1,"The district is a major centre of Theyyam, a ritual dance of northern Kerala.",4,1,1,1,0.25
+354_599948-0-2-2,"Small shrines known as kavus, associated with the Theyyam, dot the district.",12,1,1,1,0.8
+354_599948-0-3-0,"The proposed Kannur International Airport will be the fourth international airport in Kerala and is situated in Mattannur, 26-km away from Kannur.",15,0,1,1,0.5769230769230769
+354_599948-0-4-0,"According to the 2011 census Kannur district has a population of 2,525,637, roughly equal to the nation of Kuwait or the US state of Nevada.",5,1,1,1,0.1851851851851851
+354_599948-0-4-1,This gives it a ranking of 170th in India (out of a total of 640).,4,1,1,1,0.2222222222222222
+354_599948-0-4-2,The district has a population density of 852 PD/sqkm.,4,1,1,1,0.3333333333333333
+354_599948-0-4-3,Its population growth rate over the decade 2001-2011 was 4.84%.,12,1,1,1,0.8571428571428571
+354_599948-0-4-4,"Kannur has a sex ratio of 1133 females for every 1000 males, the highest among any district in India, and a literacy rate of 95.41%.",24,1,1,1,0.8275862068965517
+354_599948-0-5-0,"The District has a population of 2,412,365 (2001 census).",3,1,1,1,0.25
+354_599948-0-5-1,"This was the most urbanised district in Kerala in 2001, but was pushed to 4th place after Ernakulam, Thrissur and Kozhikode in 2011.",12,2,1,1,0.4615384615384615
+354_599948-0-5-2,About 50.35% of the population reside in the urban agglomerations.,5,1,1,1,0.4166666666666667
+354_599948-0-5-3,"The total urban population of Kannur district is 1,212,898.",5,1,1,1,0.5
+354_599948-0-5-4,This is the second largest urban population in Kerala after Ernakulam and is more than the population of a metro city.,16,1,1,1,0.7272727272727273
+354_599948-0-6-0,In the 2001 Indian Census Hindus made up 61.47% of the population; Christians 10.84%; and Muslims 27.63%.T,15,1,1,1,0.6521739130434783
+354_599948-0-6-1,"The majority of the Anglo-Indian community lives in the Kannur Cantonment and the surrounding areas of Thillery, No.3 Bazaar and Camp Bazaar.",18,1,1,1,0.6666666666666666
+354_599948-0-6-2,The high urban population is due to the 45 towns in the district which was the highest in Kerala as per 2001 census.,11,1,1,1,0.4583333333333333
+354_599948-0-6-3,2011 census has Thrissur with 135 towns with Kannur having 67.,7,1,1,1,0.5833333333333334
+355_427241-0-0-0,Dušan Dragosavac (; born 1 December 1919 - died 21 December 2014) was a former Yugoslav politician.,18,1,1,1,0.9
+355_427241-0-0-1,He was a Serb from Croatia.,2,1,1,1,0.2857142857142857
